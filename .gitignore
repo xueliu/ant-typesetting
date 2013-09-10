@@ -1,6 +1,9 @@
-*.class
+# Build folder
+/build
 
-# Package Files #
-*.jar
-*.war
-*.ear
+# Library folder
+/lib
+
+# Dist folder
+/dist
+/nbproject/private/

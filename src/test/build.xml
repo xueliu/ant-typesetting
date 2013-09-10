@@ -1,0 +1,34 @@
+<project name="test-ant-typesetting" default="build" basedir="." xmlns:typesetting="typesetting:de.lekse.ant.typesetting">
+    <!-- <path id="ant-typesetting.classpath" path="${basedir}/ant-typesetting.jar" /> -->
+
+    <!-- <taskdef name="bootstrap" uri="typesetting:de.lekse.ant.typesetting" classname="de.lekse.ant.typesetting.tasks.BootstrapTask" classpathref="ant-typesetting.classpath" />
+    <taskdef name="typeset" uri="typesetting:de.lekse.ant.typesetting" classname="de.lekse.ant.typesetting.tasks.TypesetTask" classpathref="ant-typesetting.classpath" />
+    <taskdef name="clean" uri="typesetting:de.lekse.ant.typesetting" classname="de.lekse.ant.typesetting.tasks.CleanTask" classpathref="ant-typesetting.classpath" /> -->
+    <!-- <echo message="" /> -->
+
+    <taskdef name="bootstrap" uri="typesetting:de.lekse.ant.typesetting" classname="de.lekse.ant.typesetting.tasks.BootstrapTask" />
+    <taskdef name="typeset" uri="typesetting:de.lekse.ant.typesetting" classname="de.lekse.ant.typesetting.tasks.TypesetTask" />
+    <taskdef name="clean" uri="typesetting:de.lekse.ant.typesetting" classname="de.lekse.ant.typesetting.tasks.CleanTask" />
+
+    <!-- Load properties from file -->
+    <property file="build.properties" />
+
+    <!-- Define additional properties -->
+    <property name="test.folder" location="${basedir}/../../build/test" />
+
+    <!-- Bootstrap typesetting (create targets from property namespace "documents.") -->
+    <typesetting:bootstrap />
+
+    <!-- Build target -->
+    <target name="build">
+        <typesetting:typeset document="${basedir}/document.tex" outputdir="${test.folder}" verbose="false">
+            <!--  continuous="true" -->
+            <fileset dir="${basedir}" includes="**/*.tex" />
+        </typesetting:typeset>
+    </target>
+
+    <!-- Clean target -->
+    <target name="clean">
+        <typesetting:clean dir="${test.folder}" />
+    </target>
+</project>
