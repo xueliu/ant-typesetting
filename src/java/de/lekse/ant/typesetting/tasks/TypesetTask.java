@@ -67,9 +67,10 @@ public class TypesetTask extends Task {
     private File outputdir;
     
     /**
-     * TODO
+     * Defines the name of the generated output. The value of this attribute is
+     * used as the value for the parameter -jobname when invoking pdflatex.
      */
-    private File outputfile;
+    private String outputname;
     
     /**
      * Defines the language the document should be compiled with.
@@ -250,16 +251,6 @@ public class TypesetTask extends Task {
             preamble.append(String.format("\\newcommand\\locale{%1$s}", language));
         }
 
-        // Jobname
-        String jobname;
-        
-        if (this.outputfile != null) {
-            jobname = this.outputfile.getName();
-        }
-        else {
-            jobname = type;
-        }
-
         // Set input document
         Path basePath = Paths.get((this.basedir != null ? this.basedir : _project.getBaseDir()).getAbsolutePath());
         Path documentPath = Paths.get(this.document.getParent());
@@ -267,10 +258,23 @@ public class TypesetTask extends Task {
         
         String documentName = this.document.getName();
         String documentWithoutExt = documentName.substring(0, documentName.lastIndexOf("."));
+        String documentSeparator = relativeDocumentPath.toString().isEmpty() ? "" : "/";
         
-        String inputDocument = String.format("%1$s%2$s", relativeDocumentPath, documentWithoutExt);
+        String inputDocument = String.format("%1$s%3$s%2$s", relativeDocumentPath.toString().replaceAll("\\\\", "/"), documentWithoutExt, documentSeparator);
         
         preamble.append(String.format("\\input{%1$s}", inputDocument));
+
+        // Job name
+        String jobname;
+        
+        if (this.outputname != null) {
+            // Use the defined output name as job name
+            jobname = this.outputname;
+        }
+        else {
+            // Use the document name as job name
+            jobname = documentWithoutExt;
+        }
         
         // Create execution task
         ExecTask exec = (ExecTask) _project.createTask("exec");
@@ -321,7 +325,7 @@ public class TypesetTask extends Task {
     private void continousExecute() throws BuildException {
         try {
             // Build list of distinct paths to watch
-            
+            // TODO
             
             // Create watch service
             // (see http://docs.oracle.com/javase/tutorial/essential/io/notification.html#overview)
@@ -459,12 +463,12 @@ public class TypesetTask extends Task {
         this.tikzcompatibility = tikzcompatibility;
     }
 
-    public File getOutputfile() {
-        return outputfile;
+    public String getOutputname() {
+        return outputname;
     }
 
-    public void setOutputfile(File outputfile) {
-        this.outputfile = outputfile;
+    public void setOutputname(String outputname) {
+        this.outputname = outputname;
     }
 
     public Boolean getContinuous() {

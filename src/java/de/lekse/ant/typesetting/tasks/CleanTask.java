@@ -14,18 +14,26 @@ public class CleanTask extends Task {
     
     private static String AUXILIARY_TEX_FILES = "*.aux,*.auxlock,*.gz,*.log,*.nav,*.out,*.pdf,*.snm,*.toc";
     
-    private File location;
+    private File dir;
 
     @Override
     public void execute() throws BuildException {
         // Define set of included files
         FileSet fileset = new FileSet();
-        fileset.setDir(this.location);
+        fileset.setDir(this.dir);
         fileset.setIncludes(AUXILIARY_TEX_FILES);
 
         Delete delete = (Delete) this.getProject().createTask("delete");
         delete.addFileset(fileset);
         delete.perform();
+    }
+
+    public File getDir() {
+        return dir;
+    }
+
+    public void setDir(File dir) {
+        this.dir = dir;
     }
     
 }

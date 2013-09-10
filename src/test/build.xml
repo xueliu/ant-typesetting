@@ -21,7 +21,7 @@
 
     <!-- Build target -->
     <target name="build">
-        <typesetting:typeset document="${basedir}/document.tex" outputdir="${test.folder}" verbose="false">
+        <typesetting:typeset document="${basedir}/document.tex" basedir="${basedir}" outputdir="${test.folder}" verbose="false">
             <!--  continuous="true" -->
             <fileset dir="${basedir}" includes="**/*.tex" />
         </typesetting:typeset>
