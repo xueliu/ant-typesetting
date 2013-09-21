@@ -20,7 +20,10 @@ import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.ExecTask;
+import org.apache.tools.ant.types.DirSet;
+import org.apache.tools.ant.types.Environment.Variable;
 import org.apache.tools.ant.types.FileSet;
+import org.apache.tools.ant.types.Reference;
 
 public class TypesetTask extends Task {
     
@@ -33,6 +36,8 @@ public class TypesetTask extends Task {
     private static final String TYPE_BEAMER_HANDOUT = "beamer-handout";
     
     private static final String TYPE_BEAMER_ARTICLE = "beamer-article";
+    
+    private static final String ENV_VARIABLE_TEXINPUTS = "TEXINPUTS";
     
     /**
      * Defines the type of the compiled document. The type can be on of the
@@ -104,6 +109,13 @@ public class TypesetTask extends Task {
      * Defaults to false.
      */
     private boolean verbose;
+    
+    /**
+     * Defines a set of paths which should be used for searching inputs. The
+     * value of this attribute is used to define the TEXINPUTS environment
+     * variable when invoking pdflatex.
+     */
+    private org.apache.tools.ant.types.Path inputPath;
     
     /**
      * Default constructor
@@ -304,6 +316,19 @@ public class TypesetTask extends Task {
 
         if (this.draft) {
             exec.createArg().setValue("-draftmode");
+        }
+        
+        // Append environment variables
+        if (this.inputPath != null) {
+            // Determine complete input path path (prepend base path and append default texinputs)
+            String texInputs = String.format("%1$s%2$s", this.inputPath.toString(), File.pathSeparator);
+            
+            // Create environment variable
+            Variable texInputVar = new Variable();
+            texInputVar.setKey(ENV_VARIABLE_TEXINPUTS);
+            texInputVar.setValue(texInputs);
+            
+            exec.addEnv(texInputVar);
         }
 
         // Execute pdflatex
@@ -517,6 +542,14 @@ public class TypesetTask extends Task {
 
     public void setVerbose(boolean verbose) {
         this.verbose = verbose;
+    }
+    
+    public void setInputPathRef(Reference r) {
+        if (this.inputPath == null) {
+            this.inputPath = new org.apache.tools.ant.types.Path(getProject());
+        }
+        
+        this.inputPath.setRefid(r);
     }
     
 }
