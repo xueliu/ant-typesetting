@@ -52,6 +52,16 @@ public class TypesetTask extends Task {
      *                   imports the package beamerarticle directly afterwards.
      */
     private String type;
+    
+    /**
+     * 
+     */
+    private String documentclass;
+    
+    /**
+     * 
+     */
+    private String documentattributes;
 
     /**
      * Defines the working directory in which the pdflatex compiler is
@@ -102,7 +112,12 @@ public class TypesetTask extends Task {
     /**
      * If true, TODO
      */
-    private boolean tikzcompatibility;
+    private boolean enableTikz;
+    
+    /**
+     * Defines the path which should be used for caching tikz pictures.
+     */
+    private File tikzCache;
     
     /**
      * If true, the task outputs the log produced by the pdflatex invocation.
@@ -132,7 +147,7 @@ public class TypesetTask extends Task {
         
         this.draft = false;
         this.continuous = false;
-        this.tikzcompatibility = false;
+        this.enableTikz = false;
         this.verbose = false;
     }
     
@@ -219,51 +234,7 @@ public class TypesetTask extends Task {
         // Create buffer for preamble
         StringBuilder preamble = new StringBuilder();
         
-        // Document class
-        String documentclass = null;
-        
-        if (type.equals(TYPE_DEFAULT)) {
-            // Do not overwrite the documentclass
-        }
-        else if (type.equals(TYPE_ARTICLE)) {
-            // Use documentclass article
-            documentclass = "\\documentclass{article}";
-        }
-        else if (type.equals(TYPE_BEAMER)) {
-            // Use documentclass beamer
-            documentclass = "\\documentclass{beamer}";
-        }
-        else if (type.equals(TYPE_BEAMER_HANDOUT)) {
-            // Use documentclass beamer with handout attribute
-            documentclass = "\\documentclass[handout]{beamer}";
-        }
-        else if (type.equals(TYPE_BEAMER_ARTICLE)) {
-            // Use documentclass beamer with importing the package beamerarticle 
-            documentclass = "\\documentclass{article}";
-            documentclass += "\\usepackage{beamerarticle}";
-        }
-        
-        if (documentclass != null) {
-            // Add document class to preamble
-            preamble.append(documentclass);
-
-            // Overwrite the documentclass
-            preamble.append("\\renewcommand\\documentclass[2][]{}");
-        }
-        
-        // Ensure compatibility with TikZ externalize feature
-        if (this.tikzcompatibility) {
-            preamble.append("\\usepackage{tikz}");
-            preamble.append("\\usetikzlibrary{external}");
-            preamble.append(String.format("\\tikzset{external/system call={pdflatex \\tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname \"\\image\" \"\\string\\def\\string\\tikzexternalrealjob{%1$s}\\string%2$s\\string\\renewcommand\\string\\documentclass[2][]{}\\string\\input{%1$s}\"}}", document, documentclass));
-        }
-        
-        // Language
-        if (this.language != null) {
-            preamble.append(String.format("\\newcommand\\locale{%1$s}", language));
-        }
-
-        // Set input document
+        // Determine input document
         Path basePath = Paths.get((this.basedir != null ? this.basedir : _project.getBaseDir()).getAbsolutePath());
         Path documentPath = Paths.get(this.document.getParent());
         Path relativeDocumentPath = basePath.relativize(documentPath);
@@ -274,6 +245,65 @@ public class TypesetTask extends Task {
         
         String inputDocument = String.format("%1$s%3$s%2$s", relativeDocumentPath.toString().replaceAll("\\\\", "/"), documentWithoutExt, documentSeparator);
         
+        // Document class
+        String _documentclass = null;
+        
+        if (this.documentclass != null) {
+            // Document class has been explicitly specified
+            if (this.documentattributes != null) {
+                _documentclass = String.format("\\documentclass[%2$s]{%1$s}", this.documentclass, this.documentattributes);
+            }
+            else {
+                _documentclass = String.format("\\documentclass{%1$s}", this.documentclass);
+            }
+        }
+        else {
+            // Document class is derived from type
+            if (type.equals(TYPE_DEFAULT)) {
+                // Do not overwrite the documentclass
+            }
+            else if (type.equals(TYPE_ARTICLE)) {
+                // Use documentclass article
+                _documentclass = "\\documentclass{article}";
+            }
+            else if (type.equals(TYPE_BEAMER)) {
+                // Use documentclass beamer
+                _documentclass = "\\documentclass{beamer}";
+            }
+            else if (type.equals(TYPE_BEAMER_HANDOUT)) {
+                // Use documentclass beamer with handout attribute
+                _documentclass = "\\documentclass[handout]{beamer}";
+            }
+            else if (type.equals(TYPE_BEAMER_ARTICLE)) {
+                // Use documentclass beamer with importing the package beamerarticle 
+                _documentclass = "\\documentclass{article}";
+                _documentclass += "\\usepackage{beamerarticle}";
+            }
+        }
+        
+        if (_documentclass != null) {
+            // Add document class to preamble
+            preamble.append(_documentclass);
+
+            // Overwrite the documentclass
+            preamble.append("\\renewcommand\\documentclass[2][]{}");
+        }
+        
+        // Ensure compatibility with TikZ externalize feature
+        if (this.enableTikz) {
+            preamble.append("\\usepackage{tikz}");
+            preamble.append("\\usetikzlibrary{external}");
+            preamble.append(String.format("\\tikzset{external/system call={pdflatex \\tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname \"\\image\" \"\\string\\def\\string\\tikzexternalrealjob{%1$s}\\string%2$s\\string\\renewcommand\\string\\documentclass[2][]{}\\string\\input{%1$s}\"}}", inputDocument, _documentclass));
+            
+            // TODO set tikz cache dir
+        }
+        
+        // Language
+        if (this.language != null) {
+            preamble.append(String.format("\\newcommand\\locale{%1$s}", language));
+        }
+
+        // Set input document
         preamble.append(String.format("\\input{%1$s}", inputDocument));
 
         // Job name
@@ -481,11 +511,11 @@ public class TypesetTask extends Task {
     }
 
     public Boolean getTikzcompatibility() {
-        return tikzcompatibility;
+        return enableTikz;
     }
 
     public void setTikzcompatibility(Boolean tikzcompatibility) {
-        this.tikzcompatibility = tikzcompatibility;
+        this.enableTikz = tikzcompatibility;
     }
 
     public String getOutputname() {
@@ -528,12 +558,36 @@ public class TypesetTask extends Task {
         this.continuous = continuous;
     }
 
-    public boolean isTikzcompatibility() {
-        return tikzcompatibility;
+    public String getDocumentclass() {
+        return documentclass;
     }
 
-    public void setTikzcompatibility(boolean tikzcompatibility) {
-        this.tikzcompatibility = tikzcompatibility;
+    public void setDocumentclass(String documentclass) {
+        this.documentclass = documentclass;
+    }
+
+    public String getDocumentattributes() {
+        return documentattributes;
+    }
+
+    public void setDocumentattributes(String documentattributes) {
+        this.documentattributes = documentattributes;
+    }
+
+    public boolean isEnableTikz() {
+        return enableTikz;
+    }
+
+    public void setEnableTikz(boolean enableTikz) {
+        this.enableTikz = enableTikz;
+    }
+
+    public File getTikzCache() {
+        return tikzCache;
+    }
+
+    public void setTikzCache(File tikzCache) {
+        this.tikzCache = tikzCache;
     }
 
     public boolean isVerbose() {
