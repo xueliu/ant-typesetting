@@ -102,14 +102,16 @@ public class TypesetTask extends Task {
     private boolean draft;
     
     /**
-     * If true, TODO
+     * If true, ...
+     * TODO Document this attribute
      */
     private boolean continuous;
     
     /**
-     * If true, TODO
+     * If true, ...
+     * TODO Document this attribute
      */
-    private boolean enableTikz;
+    private boolean cache;
     
     /**
      * Defines the path which should be used for caching tikz pictures.
@@ -144,7 +146,7 @@ public class TypesetTask extends Task {
         
         this.draft = false;
         this.continuous = false;
-        this.enableTikz = false;
+        this.cache = false;
         this.verbose = false;
     }
     
@@ -251,11 +253,14 @@ public class TypesetTask extends Task {
         String externalPrefix = "";
         
         if (this.cachedir != null) {
-            Path cachePath = Paths.get(this.cachedir.getParent());
+            Path cachePath = Paths.get(this.cachedir.getPath());
             Path relativeCachePath = basePath.relativize(cachePath);
             externalPrefix = relativeCachePath.toString().replaceAll("\\\\", "/");
             
-            // TODO check for trailing slash /
+            // Ensure that the external prefix ends with a trailing slash
+            if (!externalPrefix.endsWith("/")) {
+                externalPrefix = externalPrefix.concat("/");
+            }
         }
         
         // Document class
@@ -274,6 +279,8 @@ public class TypesetTask extends Task {
             // Document class is derived from type
             if (type.equals(TYPE_DEFAULT)) {
                 // Do not overwrite the documentclass
+                // TODO read document class from document file
+                _documentclass = "\\documentclass{article}";
             }
             else if (type.equals(TYPE_ARTICLE)) {
                 // Use documentclass article
@@ -303,32 +310,39 @@ public class TypesetTask extends Task {
         }
         
         // Ensure compatibility with TikZ externalize feature
-        if (this.enableTikz) {
-            // Set cache folder
-            String cacheTex = "";
-            
-            if (this.cachedir != null) {
-                cacheTex = String.format("\\string\\tikzsetexternalprefix{%1$s}", externalPrefix);
-            }
-            
+        if (this.cache) {
             // Insert TikZ code into preamble
             preamble.append("\\usepackage{tikz}");
             preamble.append("\\usetikzlibrary{external}");
-            preamble.append(String.format("\\tikzset{external/system call={pdflatex \\tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname \"\\image\" \"\\string\\def\\string\\tikzexternalrealjob{%1$s}\\string%2$s\\string\\renewcommand\\string\\documentclass[2][]{}%3$s\\string\\input{%1$s}\"}}", inputDocument, _documentclass, cacheTex));
+            
+            // Insert placeholder for system call definition
+            preamble.append("\\tikzsetsystemcall");
+            
+            // TODO include locale in externalize call
+            // TODO include entire preamble in call
+            //preamble.append(String.format("\\tikzset{external/system call={pdflatex \\tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname \"\\image\" \"\\string\\def\\string\\tikzexternalrealjob{%1$s}\\string%2$s\\string\\renewcommand\\string\\documentclass[2][]{}%3$s\\string\\input{%1$s}\"}}", inputDocument, _documentclass, cacheDirective));
+        }
+        
+        // Define tikz cache dir
+        if (this.cache && this.cachedir != null) {
+            preamble.append(String.format("\\tikzsetexternalprefix{%1$s}", externalPrefix));
         }
         
         // Language
         if (this.language != null) {
             preamble.append(String.format("\\newcommand\\locale{%1$s}", language));
         }
-        
-        // Tikz cache dir
-        if (this.cachedir != null) {
-            preamble.append(String.format("\\tikzsetexternalprefix{%1$s}", externalPrefix));
-        }
 
         // Set input document
         preamble.append(String.format("\\input{%1$s}", inputDocument));
+        
+        // Set tikz externalize system call
+        if (this.cache) {
+            String filteredPreamble = preamble.toString().replace("\\tikzsetsystemcall", "");
+            String tikzSetSystemCall = String.format("\\tikzset{external/system call={pdflatex \\tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname \"\\image\" \"\\string\\def\\string\\tikzexternalrealjob{%1$s}%2$s\"}}", inputDocument, filteredPreamble.replace("\\", "\\string\\"));
+            
+            preamble = new StringBuilder(preamble.toString().replace("\\tikzsetsystemcall", tikzSetSystemCall));
+        }
 
         // Job name
         String jobname;
@@ -535,11 +549,11 @@ public class TypesetTask extends Task {
     }
 
     public Boolean getTikzcompatibility() {
-        return enableTikz;
+        return cache;
     }
 
     public void setTikzcompatibility(Boolean tikzcompatibility) {
-        this.enableTikz = tikzcompatibility;
+        this.cache = tikzcompatibility;
     }
 
     public String getOutputname() {
@@ -598,12 +612,12 @@ public class TypesetTask extends Task {
         this.documentattributes = documentattributes;
     }
 
-    public boolean isEnableTikz() {
-        return enableTikz;
+    public boolean isCache() {
+        return cache;
     }
 
-    public void setEnableTikz(boolean enableTikz) {
-        this.enableTikz = enableTikz;
+    public void setCache(boolean cache) {
+        this.cache = cache;
     }
 
     public File getCachedir() {
