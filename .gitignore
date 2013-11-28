@@ -1,9 +1,2 @@
-# Build folder
-/build
-
-# Library folder
-/lib
-
-# Dist folder
-/dist
-/nbproject/private/
+# Ignore target folder
+/target
