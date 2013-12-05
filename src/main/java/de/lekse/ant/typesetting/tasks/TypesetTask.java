@@ -93,7 +93,8 @@ public class TypesetTask extends Task {
     private String language;
     
     /**
-     * TODO
+     * Defines a set of files, which should be watched concerning changes. If a related document is changes, the
+     * typesetting job is executed.
      */
     private List<FileSet> relatedDocuments;
     
@@ -104,19 +105,17 @@ public class TypesetTask extends Task {
     private boolean draft;
     
     /**
-     * If true, ...
-     * TODO Document this attribute
+     * If true, the continuous compiler mode is enabled instead of the one-shot mode.
      */
     private boolean continuous;
     
     /**
-     * If true, ...
-     * TODO Document this attribute
+     * If true, the pdflatex compiler is invoked with support for caching TikZ pictures.
      */
     private boolean cache;
     
     /**
-     * Defines the path which should be used for caching tikz pictures.
+     * Defines the path which should be used for caching TikZ pictures.
      */
     private File cachedir;
     
@@ -338,7 +337,7 @@ public class TypesetTask extends Task {
         // Set input document
         preamble.append(String.format("\\input{%1$s}", inputDocument));
         
-        // Set tikz externalize system call
+        // Set TikZ externalize system call
         if (this.cache) {
             String filteredPreamble = preamble.toString().replace("\\tikzsetsystemcall", "");
             String tikzSetSystemCall = String.format("\\tikzset{external/system call={pdflatex \\tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname \"\\image\" \"\\string\\def\\string\\tikzexternalrealjob{%1$s}%2$s\"}}", inputDocument, filteredPreamble.replace("\\", "\\string\\"));
@@ -360,6 +359,7 @@ public class TypesetTask extends Task {
         
         // Create execution task
         ExecTask exec = (ExecTask) _project.createTask("exec");
+        // TODO allow configurable latex compiler (e.g. luatex)
         exec.setExecutable("pdflatex");
         
         if (!this.verbose) {
