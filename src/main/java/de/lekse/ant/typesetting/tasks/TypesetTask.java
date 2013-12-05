@@ -35,6 +35,8 @@ public class TypesetTask extends Task {
     private static final String TYPE_BEAMER_ARTICLE = "beamer-article";
     
     private static final String ENV_VARIABLE_TEXINPUTS = "TEXINPUTS";
+
+    private static final String EXEC_PROPERTY_NAMESPACE = TypesetTask.class.getSimpleName().toLowerCase();
     
     /**
      * Defines the type of the compiled document. The type can be on of the
@@ -362,8 +364,9 @@ public class TypesetTask extends Task {
         
         if (!this.verbose) {
             // Capture output and error stream of pdflatex
-            exec.setOutputproperty("pdflatex.out");
-            exec.setErrorProperty("pdflatex.err");
+
+            exec.setOutputproperty(String.format("%1$s.out", EXEC_PROPERTY_NAMESPACE));
+            exec.setErrorProperty(String.format("%1$s.err", EXEC_PROPERTY_NAMESPACE));
         }
         
         exec.setInputString(preamble.toString());
@@ -403,8 +406,7 @@ public class TypesetTask extends Task {
         exec.perform();
 
         // Get output and error stream
-        // TODO derive propertyname from class name
-        String out = _project.getProperty("pdflatex.out");
+        String out = _project.getProperty(String.format("%1$s.out", EXEC_PROPERTY_NAMESPACE));
 
         if (!this.verbose) {
             // Parse errors and warnings
