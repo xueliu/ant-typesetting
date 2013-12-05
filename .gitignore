@@ -1,2 +1,8 @@
 # Ignore target folder
 /target
+
+# Ignore Netbeans private files
+# nothing
+
+# Ignore IntelliJ private files
+/*.iws
