@@ -189,6 +189,15 @@ public class TypesetTask extends Task {
             throw new BuildException(String.format("Cache directory \"%1$s\" does not exist", this.cachedir.getAbsoluteFile()));
         }
     }
+
+    /**
+     * Verifies that the LateX compiler is available for execution.
+     *
+     * @throws BuildException
+     */
+    private void validateCompiler() throws BuildException {
+        // TODO Implement validateCompiler
+    }
     
     /**
      * Parses errors and warnings raised by the pdflatex invocation.
@@ -318,10 +327,6 @@ public class TypesetTask extends Task {
             
             // Insert placeholder for system call definition
             preamble.append("\\tikzsetsystemcall");
-            
-            // TODO include locale in externalize call
-            // TODO include entire preamble in call
-            //preamble.append(String.format("\\tikzset{external/system call={pdflatex \\tikzexternalcheckshellescape -halt-on-error -interaction=batchmode -jobname \"\\image\" \"\\string\\def\\string\\tikzexternalrealjob{%1$s}\\string%2$s\\string\\renewcommand\\string\\documentclass[2][]{}%3$s\\string\\input{%1$s}\"}}", inputDocument, _documentclass, cacheDirective));
         }
         
         // Define tikz cache dir
@@ -417,10 +422,10 @@ public class TypesetTask extends Task {
         }
     }
     
-    private void continousExecute() throws BuildException {
+    private void continuousExecute() throws BuildException {
         try {
             // Build list of distinct paths to watch
-            // TODO
+            // TODO implement continuous feature
             
             // Create watch service
             // (see http://docs.oracle.com/javase/tutorial/essential/io/notification.html#overview)
@@ -482,9 +487,9 @@ public class TypesetTask extends Task {
     public void execute() throws BuildException {
         // Validate attributes of the task
         this.validateAttributes();
-        
-        // TODO verify that pdflatex executable is on PATH variable
-        // use listFiles with FileFilter
+
+        // Verify availability of LateX compiler
+        this.validateCompiler();
         
         if (!this.continuous) {
             // One-shot mode
@@ -494,7 +499,7 @@ public class TypesetTask extends Task {
         }
         else {
             // Continuous mode
-            this.continousExecute();
+            this.continuousExecute();
         }
     }
     
