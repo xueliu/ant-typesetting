@@ -4,5 +4,6 @@
 # Ignore Netbeans private files
 # nothing
 
-# Ignore IntelliJ private files
-/*.iws
+# Ignore IntelliJ project files
+/.idea
+/*.iml
